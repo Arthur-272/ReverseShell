@@ -64,4 +64,4 @@ while True:
         continue
     c.send(cmd.encode())
     shell = c.recv(1024).decode()
-    print(c.recv(1024).decode())
+    print(c.recv(10240).decode())
