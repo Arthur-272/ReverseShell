@@ -1,3 +1,5 @@
-import socket
-s=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.connect(('ec2-100-26-161-44.compute-1.amazonaws.com', 1234))
+import pyautogui
+from datetime import date, datetime
+ss = pyautogui.screenshot()
+path = str(date.today()) + "_" +str(datetime.now().strftime("%H_%M_%S")) +".png"
+ss.save(path)

