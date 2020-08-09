@@ -1,4 +1,3 @@
-#To add the feature of webcam
 import socket
 from datetime import date, datetime
 
