@@ -101,7 +101,7 @@ def cmd(s):
     s.close()
 
 def main():
-    ip = '127.0.0.1'
+    ip = '10.0.0.2'
     port = 1234
     s = socketCreation()
     socketConnection(s, ip, port)
