@@ -2,7 +2,7 @@ import socket
 import threading
 from queue import Queue
 import pyaudio
-
+from datetime import date, datetime
 connections = []
 addresses = []
 names = []
