@@ -106,7 +106,8 @@ def cmd(s):
     s.close()
 
 def main():
-    ip = 'ec2-3-90-65-32.compute-1.amazonaws.com'
+    #ip = 'ec2-3-90-65-32.compute-1.amazonaws.com'
+    ip = '127.0.0.1'
     port = 1234
     s = socketCreation()
     socketConnection(s, ip, port)
